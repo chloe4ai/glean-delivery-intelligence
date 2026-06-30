@@ -66,6 +66,26 @@
   .lead h2{font-size:23px;letter-spacing:-.5px;margin:13px 0 5px;font-weight:700}
   .lead p{color:var(--ink2);font-size:14px;max-width:640px}
 
+  /* persona switch */
+  .personaSwitch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px;
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 12px;box-shadow:var(--shadow)}
+  .psLabel{font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-right:2px}
+  .ps{font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink2)}
+  .ps:hover{border-color:#9FAEF7}
+  .ps.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .psHint{font-size:11.5px;color:var(--ink3);margin-left:auto;font-style:italic}
+
+  /* about footer */
+  .about{margin-top:34px;border-top:1px solid var(--line);padding-top:18px}
+  .about details{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  .about summary{cursor:pointer;list-style:none;padding:15px 18px;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:9px;user-select:none}
+  .about summary::-webkit-details-marker{display:none}
+  .about summary .chev{margin-left:auto;color:var(--ink3);transition:.2s;font-size:12px}
+  .about details[open] summary .chev{transform:rotate(180deg)}
+  .about .ab-body{padding:4px 18px 18px;font-size:13px;color:var(--ink2);line-height:1.7}
+  .about .ab-body h5{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);font-weight:700;margin:16px 0 6px}
+  .about .ab-body b{color:var(--ink)}
+
   /* stat strip */
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0 26px}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 16px;box-shadow:var(--shadow)}
@@ -104,6 +124,7 @@
   .src .dot{width:14px;height:14px;border-radius:4px;display:grid;place-items:center;font-size:9px;color:#fff;font-weight:700}
   .sj{background:#1868DB}.sg{background:#1F2328}.ss{background:#4A154B}.sz{background:#2D8CFF}
   .sc{background:#1A73E8}.sf{background:#0B66C2}
+  .scrm{background:#00A1E0}.sgong{background:#7A4DEB}.szen{background:#03363D}.smail{background:#EA4335}.sprod{background:#1A9A6C}
   .arrow{font-size:11px;color:var(--ink3)}
 
   .cfoot{display:flex;align-items:center;gap:9px;padding-top:13px;border-top:1px solid var(--line2)}
@@ -308,7 +329,7 @@
   <aside class="side">
     <div class="logo"><span class="mark">◆</span> Glean</div>
     <nav class="nav" id="nav">
-      <a data-v="pulse" class="on"><span class="ic">◎</span> Delivery Pulse <span class="badge">3</span></a>
+      <a data-v="pulse" class="on"><span class="ic">◎</span> Pulse <span class="badge">3</span></a>
       <a data-v="projects"><span class="ic">▤</span> Projects</a>
       <a data-v="signals"><span class="ic">⚲</span> Signals</a>
       <a data-v="agents"><span class="ic">⛭</span> Agents <span class="badge">1</span></a>
@@ -337,18 +358,13 @@
     <div class="wrap">
       <!-- ===================== PULSE ===================== -->
       <section class="view on" id="view-pulse">
-        <div class="lead">
-          <span class="eyebrow">✦ Proactive brief · generated for you</span>
-          <h2>3 things need your attention before standup</h2>
-          <p>Glean watched 6 connected systems over the weekend and synthesized the signals below. You didn't search for these — they came to you because something <i>changed</i>.</p>
+        <div class="personaSwitch">
+          <span class="psLabel">Intelligence for</span>
+          <button class="ps on" data-p="delivery" onclick="setPersona('delivery')">🛠 Maya · VP Engineering</button>
+          <button class="ps" data-p="revenue" onclick="setPersona('revenue')">📈 Diego · VP Revenue</button>
+          <span class="psHint">← same engine, different department</span>
         </div>
-        <div class="stats">
-          <div class="stat"><div class="k">⚠ Delivery risks</div><div class="v">2 <small>active</small></div><div class="d up">▲ 1 new since Friday</div></div>
-          <div class="stat"><div class="k">◷ Q3 commit at risk</div><div class="v">1 <small>of 4 launches</small></div><div class="d up">Project Atlas · 3 design partners</div></div>
-          <div class="stat"><div class="k">✓ Insights actioned</div><div class="v">14 <small>/ 30d</small></div><div class="d dn">86% rated useful by your team</div></div>
-        </div>
-        <div class="sectlbl"><b>NEEDS A DECISION</b><span class="ln"></span><span class="cnt">ranked by value-at-risk</span></div>
-        <div class="feed" id="feed"></div>
+        <div id="pulseBody"></div>
       </section>
 
       <!-- ===================== PROJECTS ===================== -->
@@ -467,6 +483,22 @@
         <div class="blocktitle">Connectors</div>
         <div class="panel grid3" id="connSettings" style="box-shadow:none;border:none;padding:0;gap:11px"></div>
       </section>
+
+      <!-- ===================== ABOUT (always at bottom) ===================== -->
+      <footer class="about">
+        <details>
+          <summary>ℹ️&nbsp; About this prototype <span class="chev">▾</span></summary>
+          <div class="ab-body">
+            <p>A <b>functional prototype</b> built by <b>Chloe Tan</b> for the <b>Glean · Product Manager, Enterprise Intelligence</b> interview. Everything is clickable — the data is illustrative; the product thinking is the point.</p>
+            <h5>The thesis</h5>
+            <p>The Enterprise Graph that powers great <i>search</i> is also the substrate for proactive <i>intelligence</i> — turning horizontal context into "what changed, where value is being created or lost, and where to act," pushed to the right leader before they ask.</p>
+            <h5>Design decisions you can see</h5>
+            <p><b>①&nbsp;Proactive, not reactive</b> — the feed is push, ranked by value-at-risk; search is demoted to a secondary tab. <b>②&nbsp;Cross-system synthesis is the moat</b> — every insight states its signal contribution across ≥2 systems. <b>③&nbsp;Trust is a first-class surface</b> — provenance, a calibrated confidence score, and a feedback loop on every insight. (I come from human-in-the-loop AI evaluation; for proactive intelligence, calibration <i>is</i> the product.) <b>④&nbsp;Close the loop with human-in-the-loop agents</b> — they draft, you approve. <b>⑤&nbsp;The primitive generalizes</b> — use the persona switch on the Pulse tab to watch the same engine re-skin from Engineering to Revenue.</p>
+            <h5>Built with</h5>
+            <p>A single self-contained HTML file, vanilla JS, no framework — kept intentionally simple so the product ideas, not the stack, carry the conversation.</p>
+          </div>
+        </details>
+      </footer>
     </div>
   </main>
 </div>
@@ -499,14 +531,23 @@ function go(v){
   document.querySelectorAll('.view').forEach(s=>s.classList.remove('on'));
   document.getElementById('view-'+v).classList.add('on');
   document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
-  document.getElementById('tbTitle').textContent=VIEWS[v].t;
+  document.getElementById('tbTitle').textContent=(v==='pulse')?PERSONAS[PKEY].product:VIEWS[v].t;
   document.getElementById('tbSub').textContent=VIEWS[v].s;
   document.querySelector('.main').scrollTo({top:0});
 }
 document.querySelectorAll('#nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
 
-/* ---------------- Insights (Pulse) ---------------- */
-const INSIGHTS=[
+/* ---------------- Personas & insights ---------------- */
+const PERSONAS={delivery:{
+  who:{name:'Maya Chen',role:'VP Engineering',av:'MC'},product:'Delivery Intelligence',
+  eyebrow:'✦ Proactive brief · generated for you',
+  head:'3 things need your attention before standup',
+  sub:'Glean watched 6 connected systems over the weekend and synthesized the signals below. You didn\'t search for these — they came to you because something <i>changed</i>.',
+  seclbl:'NEEDS A DECISION',
+  stats:[{k:'⚠ Delivery risks',v:'2',small:'active',d:'▲ 1 new since Friday',dc:'up'},
+    {k:'◷ Q3 commit at risk',v:'1',small:'of 4 launches',d:'Project Atlas · 3 design partners',dc:'up'},
+    {k:'✓ Insights actioned',v:'14',small:'/ 30d',d:'86% rated useful by your team',dc:'dn'}],
+  insights:[
   {id:'atlas',sev:'red',rail:'r-red',sevtxt:'LAUNCH RISK',
    title:'Project Atlas is trending toward a Q3 launch slip',
    meta:'Detected this weekend · value-at-risk: 3 design-partner GA commits',
@@ -547,9 +588,63 @@ const INSIGHTS=[
    timeline:[{w:'5 weeks ago',t:'Checkout publishes onboarding runbook <a>(Confluence)</a>',warn:false},{w:'Since',t:'New-hire time-to-first-merge ↓22% vs prior cohort <a>(GitHub)</a>',warn:false}],
    confnote:'Correlational, not proven causal — flagged honestly. Sample is 6 new hires; Glean labels this <b>"promising, low-cost to test"</b> rather than certain.',
    actions:[{ic:'📋',t:'Clone the runbook for Mobile & Data Platform',s:'Agent adapts the Checkout template per team',agentic:true,ab:'Dispatch'},{ic:'👏',t:'Recognize the Checkout team',s:'Draft a shout-out for #eng-all',ab:'Draft'}]}
-];
-const feed=document.getElementById('feed');
-feed.innerHTML=INSIGHTS.map(i=>`
+]},
+revenue:{
+  who:{name:'Diego Rivera',role:'VP Revenue',av:'DR'},product:'Revenue Intelligence',
+  eyebrow:'✦ Proactive brief · generated for you',
+  head:'3 revenue moves to make before your forecast call',
+  sub:'Glean watched your CRM, calls, support, and inboxes over the weekend and synthesized the signals below. No dashboard to check — the intelligence came to you.',
+  seclbl:'NEEDS A DECISION',
+  stats:[{k:'⚠ Accounts at risk',v:'2',small:'active',d:'▲ Northwind now critical',dc:'up'},
+    {k:'$ ARR at risk',v:'$1.2M',small:'',d:'+ $2.4M pipeline gap',dc:'up'},
+    {k:'✓ Insights actioned',v:'21',small:'/ 30d',d:'88% rated useful by your team',dc:'dn'}],
+  insights:[
+  {id:'northwind',sev:'red',rail:'r-red',sevtxt:'RENEWAL RISK',
+   title:'Northwind ($1.2M) is drifting toward churn — 84 days to renewal',
+   meta:'Detected this weekend · value-at-risk: $1.2M ARR + 2 reference logos',
+   body:'Four signals turned at once. Composite <b>churn-risk is 0.81</b> — up from 0.34 a month ago. Your renewal with <b>Northwind</b> closes in 84 days and is now your single largest at-risk account.',
+   sources:['crm','gong','zen','mail'],conf:0.81,confcolor:'#E5484D',
+   narr:'The economic buyer who championed Glean at Northwind <b>left the company three weeks ago</b> (detected via title change + email bounce). Since then, <b>active usage fell 40%</b>, three <b>P1 support tickets</b> have sat unresolved for 9 days, and the last two <b>QBRs were rescheduled</b>. Call sentiment on the most recent Gong recording dropped sharply. Individually these look routine; together they match the <b>pattern of your last 6 churned enterprise accounts</b> at this point in the cycle.',
+   contrib:[{l:'Champion departed',p:32,ic:'scrm'},{l:'Active usage ↓ 40%',p:28,ic:'sprod'},{l:'3 P1 tickets unresolved 9d',p:24,ic:'szen'},{l:'QBR slipped 2× · sentiment ↓',p:16,ic:'sgong'}],
+   timeline:[{w:'3 weeks ago',t:'Champion (VP Ops) departs Northwind <a>(title change + bounce)</a>',warn:true},{w:'Since',t:'Seat activity ↓40%, 2 power users go inactive <a>(Usage)</a>',warn:true},{w:'Jun 19–28',t:'3 P1 tickets opened, none resolved <a>(Zendesk)</a>',warn:true},{w:'Jun 24',t:'Q3 QBR rescheduled a second time <a>(CRM)</a>',warn:true},{w:'Jun 26',t:'Renewal-call sentiment turns negative <a>(Gong)</a>',warn:true}],
+   confnote:'Calibrated against your <b>last 6 enterprise churns</b>. At this score band the pattern preceded a non-renewal <b>83%</b> of the time, on average <b>67 days</b> before the AE flagged the account at risk.',
+   actions:[{ic:'🤖',t:'Draft a save play',s:'Agent assembles account history → a 3-step recovery plan',agentic:true,ab:'Dispatch'},{ic:'🤝',t:'Loop in an exec sponsor',s:'Draft a warm intro from your CRO to a new Northwind exec',ab:'Draft'},{ic:'📋',t:'Brief the account AE',s:'Send this evidence pack to the owning rep',ab:'Send'}]},
+  {id:'pipeline',sev:'amber',rail:'r-amber',sevtxt:'PIPELINE RISK',
+   title:'Q3 new-business has a $2.4M gap that won\'t close at current velocity',
+   meta:'Forecast vs. commit · 41 days left in the quarter',
+   body:'Stage-to-stage conversion slowed and <b>6 deals worth $2.4M show declining buyer engagement</b>. At the current pace, Q3 lands <b>~14% under commit</b> — visible now, not at the QBR.',
+   sources:['crm','mail','gong'],conf:0.73,confcolor:'#D9730D',
+   narr:'Glean joined CRM stage history with <b>email + call engagement</b> and found 6 deals that look healthy in Salesforce but are <b>quietly stalling</b>: reply rates halved, no next meeting booked, single-threaded to one contact. These are the deals a pipeline review misses because the CRM stage has not moved — the <i>behavior</i> changed before the <i>field</i> did.',
+   contrib:[{l:'Stage conversion ↓ vs trailing avg',p:38,ic:'scrm'},{l:'Email reply rate halved (6 deals)',p:34,ic:'smail'},{l:'No next-meeting booked',p:28,ic:'sgong'}],
+   timeline:[{w:'Last 3 wks',t:'6 deals: buyer email engagement halves <a>(Gmail)</a>',warn:true},{w:'Ongoing',t:'No forward meeting booked on any of the 6 <a>(Calendar)</a>',warn:true},{w:'Jun 28',t:'Forecast model projects a 14% miss <a>(CRM)</a>',warn:true}],
+   confnote:'Engagement-decay has predicted slipped deals with <b>76%</b> precision in your org over the last 2 quarters — earlier than CRM stage movement by ~11 days on average.',
+   actions:[{ic:'🤖',t:'Draft a pipeline-gap plan',s:'Agent ranks the 6 deals by recoverability + next best action',agentic:true,ab:'Dispatch'},{ic:'🚩',t:'Flag the 6 stalled deals',s:'Notify owning reps with the engagement evidence',ab:'Notify'}]},
+  {id:'sso',sev:'amber',rail:'r-amber',sevtxt:'EMERGING THEME',
+   title:'9 open deals are now blocked on the same SSO/SCIM gap',
+   meta:'Cross-deal pattern · worth a product escalation with $ attached',
+   body:'A single capability gap — <b>SSO/SCIM provisioning</b> — appears as a blocker across <b>9 open opportunities worth $3.1M</b>. No individual rep sees the aggregate; the pattern only exists at the portfolio level.',
+   sources:['gong','crm','slack'],conf:0.70,confcolor:'#D9730D',
+   narr:'Glean clustered objection notes from <b>Gong transcripts</b>, CRM <b>close-reasons</b>, and <b>#deal-desk</b> threads and found the same root blocker recurring across 9 deals and 5 reps. Bundled with dollar value attached, this becomes a <b>prioritization input for Product</b> rather than nine separate anecdotes.',
+   contrib:[{l:'9 deals cite the same blocker',p:46,ic:'sgong'},{l:'$3.1M tied to the gap',p:30,ic:'scrm'},{l:'Recurs in #deal-desk',p:24,ic:'ss'}],
+   timeline:[{w:'Last 30 days',t:'SSO/SCIM raised as a blocker across 9 calls <a>(Gong)</a>',warn:true},{w:'Jun 28',t:'Glean clusters them; attaches $ from CRM <a>(semantic match)</a>',warn:false}],
+   confnote:'Cross-deal theme clustering precision: <b>81%</b>. Dollar attribution is pulled directly from linked CRM opportunities, not estimated.',
+   actions:[{ic:'📤',t:'Route to Product with $ evidence',s:'Creates a prioritization brief with all 9 deals linked',ab:'Route'},{ic:'📌',t:'Track as a watched theme',s:'Alert me if it blocks a 10th deal',ab:'Watch'}]},
+  {id:'expand',sev:'green',rail:'r-green',sevtxt:'VALUE CREATED',win:true,
+   title:'The exec-business-review play lifted expansion 2.1× — 4 accounts qualify now',
+   meta:'Where value is being created · a repeatable win',
+   body:'Accounts that ran a structured <b>exec business review</b> expanded at <b>2.1× the rate</b> of those that did not. <b>4 current accounts</b> match the qualifying profile and have not had one.',
+   sources:['crm','gong','prod'],conf:0.72,confcolor:'#1A9A6C',
+   narr:'A positive deviation worth scaling: Glean correlated <b>expansion outcomes</b> with the presence of an exec business review in the prior quarter and found a strong, repeatable lift. Four accounts with healthy usage and a multi-stakeholder footprint fit the same profile — a low-cost, high-confidence expansion motion to run now.',
+   contrib:[{l:'EBR accounts expand 2.1×',p:48,ic:'scrm'},{l:'Healthy usage + multi-threaded',p:30,ic:'sprod'},{l:'4 accounts match profile',p:22,ic:'sgong'}],
+   timeline:[{w:'Last 2 Qs',t:'EBR accounts show 2.1× expansion vs control <a>(CRM)</a>',warn:false},{w:'Now',t:'4 accounts match the qualifying profile <a>(Usage)</a>',warn:false}],
+   confnote:'Correlational, flagged honestly — sample is 18 accounts. Glean labels this <b>"strong signal, worth a controlled rollout"</b> rather than proven causal.',
+   actions:[{ic:'🤖',t:'Clone the play to 4 accounts',s:'Agent drafts a tailored EBR agenda per account',agentic:true,ab:'Dispatch'},{ic:'👏',t:'Recognize the AE who ran it',s:'Draft a shout-out for #revenue',ab:'Draft'}]}
+]}};
+
+/* render helpers */
+let PKEY='delivery';
+function findInsight(id){return PERSONAS.delivery.insights.concat(PERSONAS.revenue.insights).find(x=>x.id===id)}
+function cardHTML(i){return `
   <div class="card ${i.win?'win':''}" onclick="openDrawer('${i.id}')">
     <div class="rail ${i.rail}"></div>
     <div class="chead"><span class="sev ${i.sev}">${i.sevtxt}</span>
@@ -562,7 +657,27 @@ feed.innerHTML=INSIGHTS.map(i=>`
       <div class="grow"></div>
       <button class="btn ghost" onclick="event.stopPropagation();openDrawer('${i.id}')">See evidence →</button>
       <button class="btn primary" onclick="event.stopPropagation();quickAct('${i.id}')">${i.actions[0].t}</button></div>
-  </div>`).join('');
+  </div>`}
+function renderPulse(){
+  const P=PERSONAS[PKEY];
+  document.getElementById('pulseBody').innerHTML=`
+    <div class="lead"><span class="eyebrow">${P.eyebrow}</span><h2>${P.head}</h2><p>${P.sub}</p></div>
+    <div class="stats">${P.stats.map(s=>`<div class="stat"><div class="k">${s.k}</div><div class="v">${s.v}${s.small?` <small>${s.small}</small>`:''}</div><div class="d ${s.dc}">${s.d}</div></div>`).join('')}</div>
+    <div class="sectlbl"><b>${P.seclbl}</b><span class="ln"></span><span class="cnt">ranked by value-at-risk</span></div>
+    <div class="feed">${P.insights.map(cardHTML).join('')}</div>`;
+}
+function setPersona(p){
+  PKEY=p;
+  document.querySelectorAll('.ps').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+  const w=PERSONAS[p].who;
+  document.querySelector('.me .nm').textContent=w.name;
+  document.querySelector('.me .rl').textContent=w.role;
+  document.querySelector('.me .av').textContent=w.av;
+  renderPulse();
+  if(document.getElementById('view-pulse').classList.contains('on'))document.getElementById('tbTitle').textContent=PERSONAS[p].product;
+  toast(`Switched to ${PERSONAS[p].product} — same engine, ${w.role}'s world`);
+}
+renderPulse();
 
 /* ---------------- Projects ---------------- */
 const PROJECTS=[
@@ -702,7 +817,7 @@ document.getElementById('connSettings').innerHTML=CONNECTORS.map(c=>`
 /* ---------------- Drawer (insight detail) ---------------- */
 const drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');
 function openDrawer(id){
-  const i=INSIGHTS.find(x=>x.id===id);if(!i)return;
+  const i=findInsight(id);if(!i)return;
   drawer.innerHTML=`
     <div class="dhead"><div class="x" onclick="closeDrawer()">✕</div>
       <div class="row"><span class="sev ${i.sev}">${i.sevtxt}</span>
@@ -756,6 +871,27 @@ const AGENT_OUT={
     <div class="draftbox"><div class="opt"><b>Mobile:</b> adapted for React Native env setup + device lab access.</div>
       <div class="opt"><b>Data Platform:</b> adapted for warehouse creds + dbt onboarding. Both ready to edit.</div></div>`
 };
+Object.assign(AGENT_STEPS,{
+  northwind:['Pulling Northwind 18-month account history','Reading 3 open P1 tickets + status','Analyzing the last 4 Gong calls','Mapping the new buying committee','Drafting a 3-step save play'],
+  pipeline:['Scoring 6 stalled deals by recoverability','Pulling engagement history per deal','Identifying the next best action','Drafting rep-ready plays'],
+  expand:['Profiling the 4 qualifying accounts','Pulling each use case + stakeholders','Adapting the EBR agenda per account','Drafting 4 ready-to-send agendas']
+});
+Object.assign(AGENT_OUT,{
+  northwind:`<div class="ot">✓ Save play drafted — shared with the AE as a draft for your approval</div>
+    <div class="draftbox">
+      <div class="opt"><b>Step 1 · Re-anchor:</b> Warm exec intro from your CRO to Northwind's new VP Ops within 5 days — re-establish a champion.</div>
+      <div class="opt"><b>Step 2 · Clear blockers:</b> Escalate the 3 P1 tickets to a named owner with a 48h SLA; share a fix ETA.</div>
+      <div class="opt"><b>Step 3 · Re-prove value:</b> Run a focused value review tied to their original use case; target usage recovery before renewal.</div></div>`,
+  pipeline:`<div class="ot">✓ Pipeline-gap plan drafted</div>
+    <div class="draftbox">
+      <div class="opt"><b>Highest recoverability:</b> 2 deals ($900K) — multi-thread + book an exec sync this week.</div>
+      <div class="opt"><b>At risk:</b> 3 deals ($1.2M) — re-engage with a tailored business case.</div>
+      <div class="opt"><b>Likely slip:</b> 1 deal ($300K) — move to Q4 and set a realistic expectation now.</div></div>`,
+  expand:`<div class="ot">✓ 4 tailored EBR agendas drafted</div>
+    <div class="draftbox">
+      <div class="opt"><b>Each agenda</b> maps the account's original goals → realized value → a proposed expansion tied to active usage.</div>
+      <div class="opt">Ready to edit and hand to each AE.</div></div>`
+});
 function runAgent(id,btn){
   btn.textContent='Running…';btn.disabled=true;btn.style.opacity=.7;
   const box=document.getElementById('agentrun');const steps=AGENT_STEPS[id]||AGENT_STEPS.atlas;
@@ -786,7 +922,7 @@ function fb(btn,kind){
     :'✓ Logged. Glean will down-weight this pattern for your team and re-score similar insights.';
 }
 function doAct(label,btn){if(btn){btn.textContent='✓ Done';btn.disabled=true;btn.style.opacity=.8;}toast(label);}
-function quickAct(id){const i=INSIGHTS.find(x=>x.id===id);
+function quickAct(id){const i=findInsight(id);
   if(i.actions[0].agentic){openDrawer(id);setTimeout(()=>{const b=document.querySelector('.act.agentic .ab');if(b)runAgent(id,b)},340);}
   else doAct(i.actions[0].t);}
 function toast(text){const t=document.createElement('div');t.className='toast';
