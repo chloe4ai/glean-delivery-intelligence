@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glean · Delivery Intelligence</title>
+<style>
+  :root{
+    --bg:#F6F7F9; --panel:#FFFFFF; --ink:#0F1729; --ink2:#46506A; --ink3:#7A839B;
+    --line:#E7E9EF; --line2:#EFF1F5;
+    --brand:#3D5AFE; --brand-soft:#EEF1FF; --brand-ink:#2A3EB1;
+    --red:#E5484D; --red-soft:#FDECEC; --amber:#D9730D; --amber-soft:#FBEFDF;
+    --green:#1A9A6C; --green-soft:#E4F5EE; --blue:#2F6FED; --blue-soft:#E8F0FE;
+    --shadow:0 1px 2px rgba(16,23,41,.04),0 8px 24px rgba(16,23,41,.06);
+    --shadow-lg:0 12px 40px rgba(16,23,41,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  ::selection{background:#d9e0ff}
+  a{color:inherit}
+
+  /* ---------- App shell ---------- */
+  .app{display:grid;grid-template-columns:232px 1fr;height:100vh;overflow:hidden}
+  .side{background:#0F1729;color:#C7CEDF;display:flex;flex-direction:column;padding:18px 14px}
+  .logo{display:flex;align-items:center;gap:9px;padding:6px 8px 18px;font-weight:700;color:#fff;font-size:16px;letter-spacing:-.2px}
+  .logo .mark{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#5B73FF,#9A6BFF);
+    display:grid;place-items:center;font-size:13px;box-shadow:0 2px 8px rgba(91,115,255,.5)}
+  .nav{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+  .nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:#AEB7CC;
+    font-size:13.5px;font-weight:500;text-decoration:none;cursor:pointer;user-select:none}
+  .nav a .ic{width:17px;text-align:center;opacity:.85}
+  .nav a .badge{margin-left:auto;font-size:10.5px;font-weight:700;background:#E5484D;color:#fff;border-radius:20px;padding:1px 7px}
+  .nav a:hover{background:#1B2640;color:#E7ECF7}
+  .nav a.on{background:#22305A;color:#fff}
+  .nav .grouplbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#65718E;padding:14px 10px 6px;font-weight:600}
+  .side .spacer{flex:1}
+  .me{display:flex;align-items:center;gap:10px;padding:8px;border-radius:9px;background:#161F38}
+  .me .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#FF8A65,#F0628E);
+    display:grid;place-items:center;color:#fff;font-weight:700;font-size:12px}
+  .me .nm{font-size:12.5px;color:#E7ECF7;font-weight:600;line-height:1.2}
+  .me .rl{font-size:11px;color:#7E89A4}
+
+  /* ---------- Main ---------- */
+  .main{overflow-y:auto;position:relative}
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(246,247,249,.86);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);padding:13px 30px;display:flex;align-items:center;gap:16px}
+  .topbar h1{font-size:16px;font-weight:700;letter-spacing:-.3px}
+  .topbar .sub{color:var(--ink3);font-size:12.5px;border-left:1px solid var(--line);padding-left:16px}
+  .topbar .grow{flex:1}
+  .miniSearch{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);
+    border-radius:9px;padding:7px 11px;color:var(--ink3);font-size:12.5px;width:210px;cursor:pointer}
+  .miniSearch:hover{border-color:#CFD5E6}
+  .pill{font-size:11px;font-weight:600;padding:4px 9px;border-radius:20px;background:var(--green-soft);color:var(--green)}
+
+  .wrap{max-width:880px;margin:0 auto;padding:26px 30px 80px}
+  .view{display:none}
+  .view.on{display:block;animation:vfade .22s}
+  @keyframes vfade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+  .lead{margin-bottom:20px}
+  .lead .eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;
+    color:var(--brand-ink);background:var(--brand-soft);padding:5px 11px;border-radius:20px}
+  .lead h2{font-size:23px;letter-spacing:-.5px;margin:13px 0 5px;font-weight:700}
+  .lead p{color:var(--ink2);font-size:14px;max-width:640px}
+
+  /* stat strip */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0 26px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 16px;box-shadow:var(--shadow)}
+  .stat .k{font-size:11.5px;color:var(--ink3);font-weight:600;display:flex;align-items:center;gap:6px}
+  .stat .v{font-size:25px;font-weight:700;letter-spacing:-.5px;margin-top:7px}
+  .stat .v small{font-size:13px;color:var(--ink3);font-weight:600}
+  .stat .d{font-size:11.5px;margin-top:3px;font-weight:600}
+  .up{color:var(--red)} .dn{color:var(--green)}
+
+  .sectlbl{display:flex;align-items:center;gap:10px;margin:8px 2px 14px}
+  .sectlbl b{font-size:12.5px;font-weight:700;letter-spacing:.02em}
+  .sectlbl .ln{flex:1;height:1px;background:var(--line)}
+  .sectlbl .cnt{font-size:11px;color:var(--ink3);background:#fff;border:1px solid var(--line);
+    padding:2px 8px;border-radius:20px;font-weight:600}
+
+  /* ---------- Insight cards ---------- */
+  .feed{display:flex;flex-direction:column;gap:13px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:17px 18px;
+    box-shadow:var(--shadow);cursor:pointer;transition:.16s;position:relative;overflow:hidden}
+  .card:hover{border-color:#CFD5E6;box-shadow:0 2px 4px rgba(16,23,41,.05),0 14px 32px rgba(16,23,41,.09);transform:translateY(-1px)}
+  .card .rail{position:absolute;left:0;top:0;bottom:0;width:4px}
+  .rail.r-red{background:var(--red)} .rail.r-amber{background:var(--amber)}
+  .rail.r-green{background:var(--green)} .rail.r-blue{background:var(--blue)}
+  .chead{display:flex;align-items:flex-start;gap:12px}
+  .sev{flex-shrink:0;font-size:11px;font-weight:700;padding:4px 9px;border-radius:7px;letter-spacing:.02em;white-space:nowrap}
+  .sev.red{background:var(--red-soft);color:var(--red)} .sev.amber{background:var(--amber-soft);color:var(--amber)}
+  .sev.green{background:var(--green-soft);color:var(--green)} .sev.blue{background:var(--blue-soft);color:var(--blue)}
+  .ctitle{font-size:15.5px;font-weight:700;letter-spacing:-.2px;line-height:1.35}
+  .cmeta{font-size:12px;color:var(--ink3);margin-top:3px}
+  .cbody{color:var(--ink2);font-size:13.5px;margin:11px 0 13px}
+  .cbody b{color:var(--ink);font-weight:600}
+
+  .signals{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:13px}
+  .src{display:inline-flex;align-items:center;gap:6px;background:#F8F9FC;border:1px solid var(--line2);
+    border-radius:7px;padding:4px 9px;font-size:11.5px;color:var(--ink2);font-weight:500}
+  .src .dot{width:14px;height:14px;border-radius:4px;display:grid;place-items:center;font-size:9px;color:#fff;font-weight:700}
+  .sj{background:#1868DB}.sg{background:#1F2328}.ss{background:#4A154B}.sz{background:#2D8CFF}
+  .sc{background:#1A73E8}.sf{background:#0B66C2}
+  .arrow{font-size:11px;color:var(--ink3)}
+
+  .cfoot{display:flex;align-items:center;gap:9px;padding-top:13px;border-top:1px solid var(--line2)}
+  .conf{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink2);font-weight:600}
+  .confbar{width:54px;height:6px;border-radius:6px;background:#EAEDF3;overflow:hidden}
+  .confbar i{display:block;height:100%;border-radius:6px}
+  .cfoot .grow{flex:1}
+  .btn{font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:8px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);transition:.13s;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{background:#F4F6FB;border-color:#CFD5E6}
+  .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .btn.primary:hover{background:#2F49E0}
+  .btn.ghost{border-color:transparent;color:var(--brand-ink)}
+  .btn.ghost:hover{background:var(--brand-soft)}
+  .card.win{background:linear-gradient(180deg,#F4FBF7,#fff 60%)}
+
+  /* ---------- generic panel / grid / table ---------- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+
+  /* project cards */
+  .proj{padding:16px 17px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+  .proj:hover{border-color:#CFD5E6;transform:translateY(-1px);box-shadow:0 12px 28px rgba(16,23,41,.08)}
+  .proj .pt{font-size:15px;font-weight:700;letter-spacing:-.2px}
+  .proj .po{font-size:12px;color:var(--ink3);margin-top:2px}
+  .proj .hrow{display:flex;align-items:flex-end;gap:10px;margin:14px 0 6px}
+  .proj .hs{font-size:30px;font-weight:700;letter-spacing:-1px;line-height:1}
+  .proj .hl{font-size:11.5px;font-weight:600;margin-bottom:3px}
+  .hbar{height:7px;border-radius:6px;background:#EEF0F5;overflow:hidden;margin-bottom:11px}
+  .hbar i{display:block;height:100%;border-radius:6px}
+  .proj .pf{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--ink3);
+    border-top:1px solid var(--line2);padding-top:10px;margin-top:4px}
+  .tag{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px}
+
+  table.tbl{width:100%;border-collapse:collapse;font-size:13px}
+  table.tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);
+    font-weight:700;padding:11px 14px;border-bottom:1px solid var(--line)}
+  table.tbl td{padding:12px 14px;border-bottom:1px solid var(--line2);color:var(--ink2);vertical-align:middle}
+  table.tbl tr:last-child td{border-bottom:none}
+  table.tbl tr:hover td{background:#FAFBFE}
+  .mini-bar{display:inline-block;width:46px;height:7px;border-radius:5px;background:#EEF0F5;overflow:hidden;vertical-align:middle;margin-right:7px}
+  .mini-bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#7C8BFF,#3D5AFE)}
+
+  /* connector tiles */
+  .conn{display:flex;align-items:center;gap:12px;padding:13px 15px}
+  .conn .ci{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0}
+  .conn .cn{font-size:13.5px;font-weight:600}
+  .conn .cs{font-size:11.5px;color:var(--ink3)}
+  .conn .live{margin-left:auto;font-size:11px;font-weight:600;color:var(--green);display:flex;align-items:center;gap:5px}
+  .conn .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+
+  /* toggle */
+  .tog{position:relative;width:36px;height:21px;border-radius:20px;background:#CBD2E0;transition:.15s;flex-shrink:0;cursor:pointer}
+  .tog.on{background:var(--brand)}
+  .tog::after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .tog.on::after{left:17px}
+
+  /* agent runs */
+  .run{display:flex;align-items:center;gap:13px;padding:14px 16px;border-bottom:1px solid var(--line2)}
+  .run:last-child{border-bottom:none}
+  .run .ri{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#EEF1FF,#F3ECFF);display:grid;place-items:center;font-size:17px;flex-shrink:0}
+  .run .rt{flex:1}
+  .run .rt b{font-size:13.5px;font-weight:600;display:block}
+  .run .rt span{font-size:11.5px;color:var(--ink3)}
+  .st{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap}
+  .st.wait{background:var(--amber-soft);color:var(--amber)} .st.ok{background:var(--green-soft);color:var(--green)}
+  .st.run{background:var(--blue-soft);color:var(--blue)} .st.idle{background:#EEF0F5;color:var(--ink3)}
+
+  /* search */
+  .bigsearch{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--line);border-radius:13px;
+    padding:14px 17px;box-shadow:var(--shadow);font-size:15px}
+  .bigsearch input{border:none;outline:none;flex:1;font-size:15px;color:var(--ink);font-family:inherit;background:transparent}
+  .res{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line2)}
+  .res:last-child{border-bottom:none}
+  .res .rd{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0}
+  .res .rt2{font-size:13.5px;font-weight:600;color:var(--brand-ink)}
+  .res .rs{font-size:12px;color:var(--ink2);margin-top:2px}
+  .res .rm{font-size:11px;color:var(--ink3);margin-top:4px}
+
+  /* assistant */
+  .chat{display:flex;flex-direction:column;gap:13px;margin-bottom:18px}
+  .msg{max-width:80%;padding:12px 15px;border-radius:14px;font-size:13.5px;line-height:1.6}
+  .msg.u{align-self:flex-end;background:var(--brand);color:#fff;border-bottom-right-radius:4px}
+  .msg.a{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px;color:var(--ink2)}
+  .msg.a b{color:var(--ink)}
+  .msg.a .cite{display:inline-flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+  .chatbar{display:flex;gap:9px}
+  .chatbar input{flex:1;border:1px solid var(--line);border-radius:11px;padding:12px 15px;font-size:14px;outline:none;font-family:inherit}
+  .chatbar input:focus{border-color:#9FAEF7}
+
+  /* settings */
+  .setrow{display:flex;align-items:center;gap:16px;padding:15px 17px;border-bottom:1px solid var(--line2)}
+  .setrow:last-child{border-bottom:none}
+  .setrow .sl{flex:1}
+  .setrow .sl b{font-size:13.5px;font-weight:600;display:block}
+  .setrow .sl span{font-size:12px;color:var(--ink3)}
+  input[type=range]{width:160px;accent-color:var(--brand)}
+  .valbadge{font-size:12.5px;font-weight:700;color:var(--brand-ink);background:var(--brand-soft);padding:3px 9px;border-radius:7px;min-width:46px;text-align:center}
+
+  .blocktitle{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);font-weight:700;margin:24px 2px 12px}
+
+  /* ---------- Drawer (shared) ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(15,23,41,.34);opacity:0;pointer-events:none;transition:.22s;z-index:40}
+  .scrim.show{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:540px;max-width:94vw;background:#fff;z-index:50;
+    box-shadow:var(--shadow-lg);transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column}
+  .drawer.show{transform:translateX(0)}
+  .dhead{padding:18px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}
+  .dhead .x{position:absolute;top:16px;right:18px;width:30px;height:30px;border-radius:8px;color:var(--ink3);
+    font-size:17px;display:grid;place-items:center}
+  .dhead .x:hover{background:var(--line2);color:var(--ink)}
+  .dhead .row{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+  .dhead h3{font-size:18px;font-weight:700;letter-spacing:-.3px;padding-right:34px;line-height:1.3}
+  .dhead .sm{font-size:12px;color:var(--ink3);margin-top:5px}
+  .dbody{overflow-y:auto;padding:20px 22px 40px;flex:1}
+  .block{margin-bottom:24px}
+  .block h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3);font-weight:700;margin-bottom:11px;
+    display:flex;align-items:center;gap:7px}
+  .narr{font-size:14px;color:var(--ink2);line-height:1.65;background:var(--brand-soft);border:1px solid #DFE4FF;
+    border-radius:11px;padding:14px 15px}
+  .narr b{color:var(--brand-ink)}
+  .contrib{display:flex;flex-direction:column;gap:11px}
+  .citem{display:flex;align-items:center;gap:11px}
+  .citem .lbl{width:170px;flex-shrink:0;font-size:12.5px;color:var(--ink);font-weight:600;display:flex;align-items:center;gap:7px}
+  .citem .bar{flex:1;height:9px;border-radius:6px;background:#EEF0F5;overflow:hidden}
+  .citem .bar i{display:block;height:100%;background:linear-gradient(90deg,#7C8BFF,#3D5AFE);border-radius:6px}
+  .citem .pct{width:34px;text-align:right;font-size:11.5px;color:var(--ink3);font-weight:600}
+  .tl{position:relative;padding-left:20px}
+  .tl::before{content:"";position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:var(--line)}
+  .ev{position:relative;padding-bottom:15px}
+  .ev:last-child{padding-bottom:0}
+  .ev::before{content:"";position:absolute;left:-18px;top:3px;width:11px;height:11px;border-radius:50%;
+    background:#fff;border:2.5px solid var(--brand)}
+  .ev.warn::before{border-color:var(--red)}
+  .ev .when{font-size:11px;color:var(--ink3);font-weight:600}
+  .ev .what{font-size:13px;color:var(--ink2);margin-top:2px}
+  .ev .what b{color:var(--ink)}
+  .ev .what a{color:var(--brand-ink);text-decoration:none;font-weight:600;border-bottom:1px solid #C9D2FF}
+  .confbox{border:1px solid var(--line);border-radius:11px;padding:14px 15px;background:#FBFCFE}
+  .confbox .top{display:flex;align-items:baseline;gap:9px;margin-bottom:8px}
+  .confbox .num{font-size:26px;font-weight:700;letter-spacing:-.5px}
+  .confbox .cap{font-size:12px;color:var(--ink3)}
+  .confbox .meter{height:8px;border-radius:6px;background:#EAEDF3;overflow:hidden;margin-bottom:10px}
+  .confbox .meter i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#F0A33C,#1A9A6C)}
+  .confbox .note{font-size:12px;color:var(--ink2);line-height:1.55}
+  .confbox .note b{color:var(--ink)}
+  .acts{display:flex;flex-direction:column;gap:9px}
+  .act{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:11px;padding:12px 13px;transition:.13s}
+  .act:hover{border-color:#CFD5E6;background:#FAFBFE}
+  .act .ai{width:34px;height:34px;border-radius:9px;background:var(--brand-soft);display:grid;place-items:center;font-size:16px;flex-shrink:0}
+  .act.agentic .ai{background:linear-gradient(135deg,#EEF1FF,#F3ECFF)}
+  .act .at{flex:1}
+  .act .at b{font-size:13.5px;font-weight:600;display:block}
+  .act .at span{font-size:11.5px;color:var(--ink3)}
+  .act .ab{font-size:12px;font-weight:600;padding:6px 12px;border-radius:7px;background:var(--brand);color:#fff;white-space:nowrap}
+  .act.agentic .ab{background:#7A4DEB}
+  .act .ab.done{background:var(--green-soft);color:var(--green)}
+  .agentrun{border:1px solid #E4DAFB;border-radius:12px;background:linear-gradient(180deg,#FBF9FF,#fff);
+    padding:15px 16px;margin-top:11px;display:none}
+  .agentrun.show{display:block;animation:fade .3s}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .agentrun .ah{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700;margin-bottom:12px}
+  .agentrun .ah .sp{width:16px;height:16px;border:2.5px solid #D9CCF7;border-top-color:#7A4DEB;border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .astep{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--ink3);padding:5px 0;opacity:.4;transition:.3s}
+  .astep.on{opacity:1;color:var(--ink2)} .astep.ok{opacity:1;color:var(--ink)}
+  .astep .mk{width:17px;height:17px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;display:grid;place-items:center;font-size:10px}
+  .astep.ok .mk{background:var(--green);border-color:var(--green);color:#fff}
+  .astep.on .mk{border-color:#7A4DEB}
+  .agentout{display:none;margin-top:12px;border-top:1px solid #ECE5FB;padding-top:12px}
+  .agentout.show{display:block;animation:fade .3s}
+  .agentout .ot{font-size:12.5px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+  .draftbox{border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-size:12.5px;color:var(--ink2);line-height:1.6;background:#fff}
+  .draftbox .opt{padding:5px 0;border-bottom:1px dashed var(--line2)}
+  .draftbox .opt:last-child{border:none} .draftbox .opt b{color:var(--ink)}
+  .trust{border:1px dashed #C9D2FF;border-radius:12px;background:#FAFBFF;padding:14px 15px}
+  .trust .th{font-size:12px;font-weight:700;color:var(--brand-ink);margin-bottom:4px;display:flex;align-items:center;gap:7px}
+  .trust .ts{font-size:12px;color:var(--ink3);margin-bottom:11px}
+  .fbrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .fb{font-size:12px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink2)}
+  .fb:hover{border-color:#9FAEF7;color:var(--brand-ink)} .fb.sel{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .fbmsg{font-size:12px;color:var(--green);font-weight:600;margin-top:10px;display:none}
+  .fbmsg.show{display:block;animation:fade .3s}
+
+  .toasts{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:9px;align-items:center}
+  .toast{background:#0F1729;color:#fff;font-size:13px;font-weight:500;padding:12px 17px;border-radius:11px;
+    box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;animation:pop .25s;max-width:440px}
+  .toast .tk{width:20px;height:20px;border-radius:6px;background:var(--green);display:grid;place-items:center;font-size:12px;flex-shrink:0}
+  @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .annot{position:fixed;bottom:18px;right:18px;z-index:30;background:#0F1729;color:#C7CEDF;font-size:11.5px;
+    padding:9px 13px;border-radius:9px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-lg);max-width:280px;cursor:pointer}
+  .annot b{color:#fff}
+  .hide{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="side">
+    <div class="logo"><span class="mark">◆</span> Glean</div>
+    <nav class="nav" id="nav">
+      <a data-v="pulse" class="on"><span class="ic">◎</span> Delivery Pulse <span class="badge">3</span></a>
+      <a data-v="projects"><span class="ic">▤</span> Projects</a>
+      <a data-v="signals"><span class="ic">⚲</span> Signals</a>
+      <a data-v="agents"><span class="ic">⛭</span> Agents <span class="badge">1</span></a>
+      <div class="grouplbl">Workspace</div>
+      <a data-v="search"><span class="ic">⌕</span> Search</a>
+      <a data-v="assistant"><span class="ic">✦</span> Assistant</a>
+      <a data-v="settings"><span class="ic">⚙</span> Settings</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="me">
+      <div class="av">MC</div>
+      <div><div class="nm">Maya Chen</div><div class="rl">VP Engineering</div></div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <h1 id="tbTitle">Delivery Intelligence</h1>
+      <div class="sub" id="tbSub">Monday · Jun 29 · 7:42 AM</div>
+      <div class="grow"></div>
+      <span class="pill">● Live · 6 systems connected</span>
+      <div class="miniSearch" onclick="go('search')">⌕ Search anything…</div>
+    </div>
+
+    <div class="wrap">
+      <!-- ===================== PULSE ===================== -->
+      <section class="view on" id="view-pulse">
+        <div class="lead">
+          <span class="eyebrow">✦ Proactive brief · generated for you</span>
+          <h2>3 things need your attention before standup</h2>
+          <p>Glean watched 6 connected systems over the weekend and synthesized the signals below. You didn't search for these — they came to you because something <i>changed</i>.</p>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="k">⚠ Delivery risks</div><div class="v">2 <small>active</small></div><div class="d up">▲ 1 new since Friday</div></div>
+          <div class="stat"><div class="k">◷ Q3 commit at risk</div><div class="v">1 <small>of 4 launches</small></div><div class="d up">Project Atlas · 3 design partners</div></div>
+          <div class="stat"><div class="k">✓ Insights actioned</div><div class="v">14 <small>/ 30d</small></div><div class="d dn">86% rated useful by your team</div></div>
+        </div>
+        <div class="sectlbl"><b>NEEDS A DECISION</b><span class="ln"></span><span class="cnt">ranked by value-at-risk</span></div>
+        <div class="feed" id="feed"></div>
+      </section>
+
+      <!-- ===================== PROJECTS ===================== -->
+      <section class="view" id="view-projects">
+        <div class="lead">
+          <span class="eyebrow">▤ Organizational visibility</span>
+          <h2>Portfolio health, scored continuously</h2>
+          <p>Every active project gets a live health score composed from the same cross-system signals — so risk is visible <i>before</i> it shows up in a status report. Click a project to see the evidence.</p>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="k">▤ Active projects</div><div class="v">12</div><div class="d">across 6 teams</div></div>
+          <div class="stat"><div class="k">◷ Avg health</div><div class="v">71 <small>/100</small></div><div class="d up">▼ 6 pts this week (Atlas)</div></div>
+          <div class="stat"><div class="k">⚠ Below threshold</div><div class="v">2</div><div class="d up">Atlas · Mobile-Pay</div></div>
+        </div>
+        <div class="sectlbl"><b>PROJECTS</b><span class="ln"></span><span class="cnt">sorted by risk</span></div>
+        <div class="grid2" id="projGrid"></div>
+      </section>
+
+      <!-- ===================== SIGNALS ===================== -->
+      <section class="view" id="view-signals">
+        <div class="lead">
+          <span class="eyebrow">⚲ The intelligence layer</span>
+          <h2>Connected systems &amp; the signal catalog</h2>
+          <p>Insights are only as trustworthy as the signals beneath them. Here's exactly what Glean reads, how fresh it is, and how much each raw signal contributes to insight precision. Toggle a signal to see scores recompute.</p>
+        </div>
+        <div class="sectlbl"><b>CONNECTED SYSTEMS</b><span class="ln"></span><span class="cnt">6 live</span></div>
+        <div class="panel" id="connList" style="margin-bottom:8px"></div>
+
+        <div class="blocktitle">Signal catalog · contribution &amp; measured precision</div>
+        <div class="panel" style="overflow:hidden">
+          <table class="tbl">
+            <thead><tr><th>Signal</th><th>Source</th><th>Feeds</th><th>Weight</th><th>Precision</th><th>Active</th></tr></thead>
+            <tbody id="sigRows"></tbody>
+          </table>
+        </div>
+        <p style="font-size:12px;color:var(--ink3);margin-top:11px;line-height:1.6">
+          <b style="color:var(--ink2)">Why this view exists:</b> a proactive insight pushed to a leader is only as good as its weakest signal. Surfacing weight + measured precision per signal is how the system stays auditable — and how feedback re-weights it over time.</p>
+      </section>
+
+      <!-- ===================== AGENTS ===================== -->
+      <section class="view" id="view-agents">
+        <div class="lead">
+          <span class="eyebrow">⛭ Human-in-the-loop</span>
+          <h2>Agents draft. You approve. Nothing ships on its own.</h2>
+          <p>Every insight can dispatch an agent to do the legwork — read the board, the PRs, the transcripts — and return a draft. The human stays in control of every action that touches the org.</p>
+        </div>
+        <div class="sectlbl"><b>NEEDS YOUR REVIEW</b><span class="ln"></span><span class="cnt">1 awaiting approval</span></div>
+        <div class="panel" id="runList" style="margin-bottom:8px"></div>
+
+        <div class="blocktitle">Agent library</div>
+        <div class="grid2" id="agentLib"></div>
+      </section>
+
+      <!-- ===================== SEARCH ===================== -->
+      <section class="view" id="view-search">
+        <div class="lead">
+          <span class="eyebrow">⌕ Classic Glean</span>
+          <h2>Search is still here — it's just no longer the only way in</h2>
+          <p>Reactive search answers what you think to ask. Enterprise Intelligence surfaces what you didn't. Both run on the same graph and the same permissions.</p>
+        </div>
+        <div class="bigsearch">⌕ <input id="searchInput" placeholder="Search across Jira, GitHub, Slack, Confluence…" value="atlas launch risk" oninput="runSearch()" /></div>
+        <div class="panel" id="searchRes" style="margin-top:14px;overflow:hidden"></div>
+      </section>
+
+      <!-- ===================== ASSISTANT ===================== -->
+      <section class="view" id="view-assistant">
+        <div class="lead">
+          <span class="eyebrow">✦ Grounded in your graph</span>
+          <h2>Ask follow-ups — every answer cites its sources</h2>
+          <p>The Assistant is conversational and reactive. Enterprise Intelligence is the proactive layer on top. Try asking about Atlas.</p>
+        </div>
+        <div class="chat" id="chat">
+          <div class="msg u">What's the single biggest risk to our Q3 launches right now?</div>
+          <div class="msg a"><b>Project Atlas</b> is your top risk — composite launch-slip probability <b>78%</b>, driven by a cross-team review bottleneck and a flaky auth-service test suite blocking 13 PRs. It's the binding constraint on your GA commit to Northwind, Veridian, and Cobalt.
+            <div class="cite"><span class="src"><span class="dot sj">J</span>Jira</span><span class="src"><span class="dot sg">G</span>GitHub</span><span class="src"><span class="dot ss">S</span>Slack</span></div></div>
+        </div>
+        <div class="chatbar">
+          <input id="chatInput" placeholder="Ask a follow-up… (try: who should I reassign?)" onkeydown="if(event.key==='Enter')sendChat()" />
+          <button class="btn primary" onclick="sendChat()">Send</button>
+        </div>
+      </section>
+
+      <!-- ===================== SETTINGS ===================== -->
+      <section class="view" id="view-settings">
+        <div class="lead">
+          <span class="eyebrow">⚙ Calibration &amp; trust</span>
+          <h2>Tune the signal-to-noise yourself</h2>
+          <p>Proactive intelligence lives or dies on precision. These controls let each leader set how aggressive the feed is — and the system learns from every piece of feedback.</p>
+        </div>
+        <div class="blocktitle">Calibration</div>
+        <div class="panel">
+          <div class="setrow">
+            <div class="sl"><b>Confidence threshold</b><span>Only surface insights scored above this. Higher = quieter, more precise.</span></div>
+            <input type="range" min="40" max="95" value="65" oninput="setVal('thr',this.value)" />
+            <span class="valbadge" id="val-thr">0.65</span>
+          </div>
+          <div class="setrow">
+            <div class="sl"><b>Noise sensitivity</b><span>How readily borderline patterns are flagged as emerging themes.</span></div>
+            <input type="range" min="1" max="10" value="4" oninput="setVal('noise',this.value)" />
+            <span class="valbadge" id="val-noise">4 / 10</span>
+          </div>
+          <div class="setrow">
+            <div class="sl"><b>Lead-time vs. precision</b><span>Earlier warnings trade some accuracy. Slide toward whichever you need.</span></div>
+            <input type="range" min="0" max="100" value="60" oninput="setVal('lead',this.value)" />
+            <span class="valbadge" id="val-lead">Balanced</span>
+          </div>
+        </div>
+
+        <div class="blocktitle">Delivery scope</div>
+        <div class="panel">
+          <div class="setrow"><div class="sl"><b>Watch all 6 teams</b><span>Or narrow to the teams you own.</span></div><div class="tog on" onclick="tog(this,'Team scope updated')"></div></div>
+          <div class="setrow"><div class="sl"><b>Weekend synthesis</b><span>Run the brief Sun night so it's ready Monday 7am.</span></div><div class="tog on" onclick="tog(this,'Weekend synthesis on')"></div></div>
+          <div class="setrow"><div class="sl"><b>Auto-dispatch low-risk agents</b><span>Off by default — keeps a human in the loop on every action.</span></div><div class="tog" onclick="tog(this,'Heads up: this reduces human-in-the-loop control')"></div></div>
+        </div>
+
+        <div class="blocktitle">Connectors</div>
+        <div class="panel grid3" id="connSettings" style="box-shadow:none;border:none;padding:0;gap:11px"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Drawer -->
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer"></aside>
+
+<div class="toasts" id="toasts"></div>
+<div class="annot" id="annot" onclick="this.classList.add('hide')">
+  <span>💡</span><div><b>Functional prototype</b> by Chloe Tan — every tab in the left nav works. Click around. · dismiss</div>
+</div>
+
+<script>
+/* ---------------- Sources ---------------- */
+const SRC={jira:{c:'sj',l:'Jira'},gh:{c:'sg',l:'GitHub'},slack:{c:'ss',l:'Slack'},zoom:{c:'sz',l:'Zoom'},cal:{c:'sc',l:'Calendar'},conf:{c:'sf',l:'Confluence'}};
+function srcChip(k){const s=SRC[k];return `<span class="src"><span class="dot ${s.c}">${s.l[0]}</span>${s.l}</span>`}
+
+/* ---------------- View routing ---------------- */
+const VIEWS={
+  pulse:{t:'Delivery Intelligence',s:'Monday · Jun 29 · 7:42 AM'},
+  projects:{t:'Projects',s:'12 active · portfolio health'},
+  signals:{t:'Signals',s:'6 systems · 9 signal types'},
+  agents:{t:'Agents',s:'human-in-the-loop · you approve every action'},
+  search:{t:'Search',s:'everything you have access to'},
+  assistant:{t:'Assistant',s:'grounded in your enterprise graph'},
+  settings:{t:'Settings',s:'calibration & connectors'}
+};
+function go(v){
+  document.querySelectorAll('.view').forEach(s=>s.classList.remove('on'));
+  document.getElementById('view-'+v).classList.add('on');
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.getElementById('tbTitle').textContent=VIEWS[v].t;
+  document.getElementById('tbSub').textContent=VIEWS[v].s;
+  document.querySelector('.main').scrollTo({top:0});
+}
+document.querySelectorAll('#nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+
+/* ---------------- Insights (Pulse) ---------------- */
+const INSIGHTS=[
+  {id:'atlas',sev:'red',rail:'r-red',sevtxt:'LAUNCH RISK',
+   title:'Project Atlas is trending toward a Q3 launch slip',
+   meta:'Detected this weekend · value-at-risk: 3 design-partner GA commits',
+   body:'Three independent signals diverged at the same time. Composite <b>launch-slip probability is 78%</b> — up from 31% two weeks ago. The Q3 GA date you committed to <b>Northwind, Veridian, and Cobalt</b> is now the binding constraint.',
+   sources:['jira','gh','slack','zoom'],conf:0.84,confcolor:'#E5484D',
+   narr:'Atlas velocity has fallen for <b>3 consecutive sprints</b> while scope held flat — a burn-down the team won\'t close by Sep 12 at the current rate. The proximate cause isn\'t headcount: <b>PR review latency more than doubled</b> (2.1d → 5.4d) after the Platform team reassigned two reviewers, and <b>13 Atlas PRs are now blocked on a flaky auth-service test suite</b>. Standup sentiment in #atlas turned negative on Thu, and Friday\'s retro flagged the same dependency without an owner. This is a <b>cross-team blocker, not a team-effort problem</b> — which is why no single dashboard surfaced it.',
+   contrib:[{l:'Jira velocity ↓ 3 sprints',p:34,ic:'sj'},{l:'PR review latency 2.1→5.4d',p:29,ic:'sg'},{l:'CI: 13 PRs blocked on flaky test',p:22,ic:'sg'},{l:'#atlas sentiment ↓ (Slack+Zoom)',p:15,ic:'ss'}],
+   timeline:[{w:'2 weeks ago',t:'Platform reassigns 2 reviewers off Atlas <a>(GitHub teams change)</a>',warn:false},{w:'Jun 18',t:'<b>auth-service</b> test suite starts flaking — CI pass rate 94%→61% <a>(CI)</a>',warn:true},{w:'Jun 22–26',t:'Sprint 14 velocity comes in 38% under commit <a>(Jira)</a>',warn:true},{w:'Jun 26',t:'Friday retro: 4 engineers name the Platform dependency, no owner assigned <a>(Confluence)</a>',warn:true},{w:'Jun 27',t:'#atlas message sentiment turns negative; "we\'re blocked" appears 9× <a>(Slack)</a>',warn:true}],
+   confnote:'Calibrated against <b>142 prior delivery-risk predictions</b> in your org. At this score band, Glean was right <b>86% of the time</b> (lead time avg 19 days before slip became visible in status reports). <b>Top driver:</b> the cross-team review reassignment — removing it drops the score to 0.41.',
+   actions:[{ic:'🤖',t:'Draft a mitigation plan',s:'Agent reads Atlas Jira + PRs + last 2 standups → 3 options',agentic:true,ab:'Dispatch'},{ic:'📣',t:'Notify Atlas + Platform leads',s:'Share this brief with Sam & Priya, ask for a reviewer swap',ab:'Send'},{ic:'📅',t:'Brief execs at Mon staff',s:'Add a 2-min flag to today\'s leadership sync',ab:'Add'}]},
+  {id:'bus',sev:'amber',rail:'r-amber',sevtxt:'KEY-PERSON RISK',
+   title:'One engineer owns 63% of the payments domain — and is out next sprint',
+   meta:'Single point of failure · J. Park on PTO Jul 6–17',
+   body:'Across the last 6 months, <b>Jordan Park</b> authored or reviewed 63% of merged PRs touching <b>billing-service</b> and is the only listed CODEOWNER. Two payments items are scheduled into the sprint that starts the day Jordan\'s PTO begins.',
+   sources:['gh','jira','cal'],conf:0.79,confcolor:'#D9730D',
+   narr:'This isn\'t a performance signal — Jordan is a strength. It\'s a <b>resilience gap</b>. If a payments incident lands during the PTO window, mean-time-to-resolve historically <b>triples</b> when Jordan isn\'t the responder. Two scheduled items (<b>BILL-2231</b> dunning retry, refund webhooks) both touch the riskiest module.',
+   contrib:[{l:'CODEOWNERS: sole owner',p:40,ic:'sg'},{l:'63% of merged payments PRs',p:33,ic:'sg'},{l:'PTO overlaps payments sprint',p:27,ic:'sc'}],
+   timeline:[{w:'Last 6 mo',t:'Jordan = 63% of <b>billing-service</b> merges, only CODEOWNER <a>(GitHub)</a>',warn:false},{w:'Jun 24',t:'PTO Jul 6–17 confirmed <a>(Calendar)</a>',warn:false},{w:'Jun 26',t:'Sprint 15 plan adds 2 payments items into the PTO window <a>(Jira)</a>',warn:true}],
+   confnote:'Calibrated against <b>past on-call incidents</b>. When the sole domain owner is unavailable, payments incident MTTR rose from 41min to ~2h10 across the last 4 occurrences.',
+   actions:[{ic:'🤖',t:'Draft a knowledge-transfer plan',s:'Agent finds the 2 best backup candidates by code proximity',agentic:true,ab:'Dispatch'},{ic:'🔀',t:'Re-sequence the 2 payments items',s:'Move out of the PTO window in Jira',ab:'Open'}]},
+  {id:'theme',sev:'amber',rail:'r-amber',sevtxt:'EMERGING THEME',
+   title:'A flaky auth-service test is now blocking 3 teams, not just Atlas',
+   meta:'Cross-team pattern · first time it crosses team boundaries',
+   body:'The same root cause behind the Atlas slowdown is independently surfacing in <b>Mobile</b> and <b>Growth</b>: 11 tickets and 4 PRs across three teams trace to <b>auth-service flaky tests</b>. No single team sees the whole pattern.',
+   sources:['jira','gh','slack'],conf:0.71,confcolor:'#D9730D',
+   narr:'Glean clustered 11 tickets + 4 PR descriptions + 22 Slack messages by semantic similarity and found one shared root cause spanning <b>3 teams</b>. Individually each looks minor; together it\'s a <b>platform-level reliability issue</b> worth routing to the Platform PM with evidence attached.',
+   contrib:[{l:'11 tickets cluster to 1 cause',p:46,ic:'sj'},{l:'4 blocked PRs reference it',p:30,ic:'sg'},{l:'22 Slack mentions, 3 channels',p:24,ic:'ss'}],
+   timeline:[{w:'Jun 18–28',t:'auth-service flake referenced across <b>#atlas, #mobile, #growth-eng</b> <a>(Slack)</a>',warn:true},{w:'Jun 28',t:'Glean clusters them to one root cause <a>(semantic match)</a>',warn:false}],
+   confnote:'Clustering precision on prior cross-team themes: <b>83%</b>. The merge is based on shared stack-trace fingerprints + semantic similarity, not just keyword overlap.',
+   actions:[{ic:'📤',t:'Route to Platform PM with evidence',s:'Creates a Jira epic pre-filled with all 15 linked items',ab:'Route'},{ic:'📌',t:'Track as a watched theme',s:'Alert me if it spreads to a 4th team',ab:'Watch'}]},
+  {id:'win',sev:'green',rail:'r-green',sevtxt:'VALUE CREATED',win:true,
+   title:'The new onboarding runbook cut ramp time 22% — and it\'s replicable',
+   meta:'Where value is being created · worth scaling to 2 teams',
+   body:'Since the <b>Checkout</b> team shipped its onboarding runbook, new-hire time-to-first-merge dropped from 14d to 11d (<b>−22%</b>). Two other teams have the same ramp problem and no runbook.',
+   sources:['gh','conf','jira'],conf:0.74,confcolor:'#1A9A6C',
+   narr:'Intelligence isn\'t only risk. Glean noticed a <b>positive</b> deviation: Checkout\'s new hires are merging faster than the org baseline, and the change correlates with a runbook published 5 weeks ago. <b>Mobile</b> and <b>Data Platform</b> show the slowest ramps and have no equivalent doc — a cheap, high-confidence win to replicate.',
+   contrib:[{l:'Time-to-first-merge 14d→11d',p:50,ic:'sg'},{l:'Correlates w/ runbook publish',p:28,ic:'sf'},{l:'2 teams lack equivalent doc',p:22,ic:'sj'}],
+   timeline:[{w:'5 weeks ago',t:'Checkout publishes onboarding runbook <a>(Confluence)</a>',warn:false},{w:'Since',t:'New-hire time-to-first-merge ↓22% vs prior cohort <a>(GitHub)</a>',warn:false}],
+   confnote:'Correlational, not proven causal — flagged honestly. Sample is 6 new hires; Glean labels this <b>"promising, low-cost to test"</b> rather than certain.',
+   actions:[{ic:'📋',t:'Clone the runbook for Mobile & Data Platform',s:'Agent adapts the Checkout template per team',agentic:true,ab:'Dispatch'},{ic:'👏',t:'Recognize the Checkout team',s:'Draft a shout-out for #eng-all',ab:'Draft'}]}
+];
+const feed=document.getElementById('feed');
+feed.innerHTML=INSIGHTS.map(i=>`
+  <div class="card ${i.win?'win':''}" onclick="openDrawer('${i.id}')">
+    <div class="rail ${i.rail}"></div>
+    <div class="chead"><span class="sev ${i.sev}">${i.sevtxt}</span>
+      <div style="flex:1"><div class="ctitle">${i.title}</div><div class="cmeta">${i.meta}</div></div></div>
+    <div class="cbody">${i.body}</div>
+    <div class="signals"><span style="font-size:11px;color:var(--ink3);font-weight:600">Synthesized from</span>
+      ${i.sources.map(srcChip).join('<span class="arrow">+</span>')}</div>
+    <div class="cfoot"><div class="conf"><span>Confidence</span>
+      <span class="confbar"><i style="width:${i.conf*100}%;background:${i.confcolor}"></i></span><span>${i.conf.toFixed(2)}</span></div>
+      <div class="grow"></div>
+      <button class="btn ghost" onclick="event.stopPropagation();openDrawer('${i.id}')">See evidence →</button>
+      <button class="btn primary" onclick="event.stopPropagation();quickAct('${i.id}')">${i.actions[0].t}</button></div>
+  </div>`).join('');
+
+/* ---------------- Projects ---------------- */
+const PROJECTS=[
+  {n:'Project Atlas',o:'Atlas team · GA Sep 12',h:38,c:'#E5484D',t:'AT RISK',tc:'red',d:'▼ 33 pts in 2 weeks',dc:'up',link:'atlas'},
+  {n:'Mobile-Pay v3',o:'Mobile team · GA Aug 1',h:58,c:'#D9730D',t:'WATCH',tc:'amber',d:'▼ 9 pts — key-person risk',dc:'up',link:'bus'},
+  {n:'Checkout Redesign',o:'Checkout team · shipped',h:88,c:'#1A9A6C',t:'HEALTHY',tc:'green',d:'▲ onboarding win',dc:'dn',link:null},
+  {n:'Search Quality',o:'Core team · GA Jul 20',h:81,c:'#1A9A6C',t:'HEALTHY',tc:'green',d:'on track',dc:'',link:null},
+  {n:'Data Platform',o:'DP team · ongoing',h:74,c:'#1A9A6C',t:'HEALTHY',tc:'green',d:'slow new-hire ramp',dc:'',link:null},
+  {n:'Growth Experiments',o:'Growth team · ongoing',h:69,c:'#D9730D',t:'WATCH',tc:'amber',d:'auth-flake spillover',dc:'up',link:'theme'}
+];
+document.getElementById('projGrid').innerHTML=PROJECTS.map(p=>`
+  <div class="panel proj" onclick="${p.link?`openDrawer('${p.link}')`:`toast('${p.n} is healthy — no action needed')`}">
+    <div class="pt">${p.n}</div><div class="po">${p.o}</div>
+    <div class="hrow"><div class="hs" style="color:${p.c}">${p.h}</div><div class="hl" style="color:${p.c}">/100 health</div></div>
+    <div class="hbar"><i style="width:${p.h}%;background:${p.c}"></i></div>
+    <div class="pf"><span class="tag" style="background:${p.tc==='red'?'var(--red-soft)':p.tc==='amber'?'var(--amber-soft)':'var(--green-soft)'};color:${p.c}">${p.t}</span>
+      <span class="${p.dc}">${p.d}</span></div>
+  </div>`).join('');
+
+/* ---------------- Signals view ---------------- */
+const CONNECTORS=[
+  {k:'jira',n:'Jira',s:'Sync 2 min ago · 4,210 issues',col:'#1868DB',i:'J'},
+  {k:'gh',n:'GitHub',s:'Sync 1 min ago · 38 repos',col:'#1F2328',i:'G'},
+  {k:'slack',n:'Slack',s:'Streaming · 142 channels',col:'#4A154B',i:'S'},
+  {k:'zoom',n:'Zoom',s:'Sync 14 min ago · transcripts',col:'#2D8CFF',i:'Z'},
+  {k:'cal',n:'Google Calendar',s:'Sync 5 min ago',col:'#1A73E8',i:'C'},
+  {k:'conf',n:'Confluence',s:'Sync 8 min ago · 1,920 pages',col:'#0B66C2',i:'F'}
+];
+document.getElementById('connList').innerHTML=CONNECTORS.map((c,n)=>`
+  <div class="conn" style="${n<CONNECTORS.length-1?'border-bottom:1px solid var(--line2)':''}">
+    <div class="ci" style="background:${c.col}">${c.i}</div>
+    <div><div class="cn">${c.n}</div><div class="cs">${c.s}</div></div>
+    <div class="live">live</div></div>`).join('');
+const SIGNALS=[
+  {n:'Sprint velocity delta',src:'jira',feeds:'Slip risk',w:34,p:88},
+  {n:'PR review latency',src:'gh',feeds:'Slip risk',w:29,p:84},
+  {n:'CI pass-rate / flaky tests',src:'gh',feeds:'Slip risk · Themes',w:22,p:81},
+  {n:'Channel sentiment',src:'slack',feeds:'Slip risk',w:15,p:72},
+  {n:'CODEOWNERS concentration',src:'gh',feeds:'Key-person risk',w:40,p:90},
+  {n:'PTO / calendar overlap',src:'cal',feeds:'Key-person risk',w:27,p:86},
+  {n:'Semantic ticket clustering',src:'jira',feeds:'Emerging themes',w:46,p:83},
+  {n:'Time-to-first-merge',src:'gh',feeds:'Value created',w:50,p:74},
+  {n:'Meeting / retro transcripts',src:'zoom',feeds:'Slip risk · Themes',w:12,p:70}
+];
+function renderSignals(){
+  document.getElementById('sigRows').innerHTML=SIGNALS.map((s,n)=>`
+    <tr style="${s.off?'opacity:.45':''}">
+      <td style="color:var(--ink);font-weight:600">${s.n}</td>
+      <td>${srcChip(s.src)}</td>
+      <td style="font-size:12px">${s.feeds}</td>
+      <td><span class="mini-bar"><i style="width:${s.w*2}%"></i></span>${s.w}%</td>
+      <td><b style="color:${s.p>=85?'var(--green)':s.p>=78?'var(--amber)':'var(--ink2)'}">${s.p}%</b></td>
+      <td><div class="tog ${s.off?'':'on'}" onclick="toggleSig(${n})"></div></td>
+    </tr>`).join('');
+}
+function toggleSig(n){SIGNALS[n].off=!SIGNALS[n].off;renderSignals();
+  toast(`"${SIGNALS[n].n}" ${SIGNALS[n].off?'disabled':'enabled'} — re-scoring affected insights`);}
+renderSignals();
+
+/* ---------------- Agents view ---------------- */
+const RUNS=[
+  {ic:'🤖',t:'Atlas mitigation plan',s:'Drafted 3 options · posted to #atlas-leads',st:'wait',stt:'Awaiting approval'},
+  {ic:'📋',t:'Onboarding runbook · Mobile + Data Platform',s:'2 runbooks drafted from Checkout template',st:'ok',stt:'Approved'},
+  {ic:'🔀',t:'Re-sequence payments items',s:'Moved BILL-2231 out of PTO window',st:'ok',stt:'Done'},
+  {ic:'📤',t:'Route auth-flake theme to Platform PM',s:'Epic created · 15 items linked',st:'run',stt:'Running'}
+];
+document.getElementById('runList').innerHTML=RUNS.map(r=>`
+  <div class="run"><div class="ri">${r.ic}</div>
+    <div class="rt"><b>${r.t}</b><span>${r.s}</span></div>
+    <span class="st ${r.st}">${r.stt}</span>
+    ${r.st==='wait'?'<button class="btn primary" onclick="toast(\'Approved — agent will execute Option A\')">Review</button>':''}</div>`).join('');
+const AGENTLIB=[
+  {ic:'🤖',n:'Mitigation Drafter',d:'Reads a project\'s board, PRs & standups; proposes 3 recovery options.'},
+  {ic:'👥',n:'Knowledge-Transfer Planner',d:'Finds backup owners by code proximity; drafts a transfer plan.'},
+  {ic:'📋',n:'Runbook Cloner',d:'Adapts a winning runbook/template for other teams.'},
+  {ic:'📤',n:'Theme Router',d:'Bundles a cross-team theme into one evidenced epic and routes it.'}
+];
+document.getElementById('agentLib').innerHTML=AGENTLIB.map(a=>`
+  <div class="panel" style="padding:15px 16px;display:flex;gap:12px;align-items:flex-start">
+    <div class="ri">${a.ic}</div>
+    <div style="flex:1"><b style="font-size:13.5px">${a.n}</b><div style="font-size:12px;color:var(--ink3);margin-top:3px;line-height:1.5">${a.d}</div>
+      <button class="btn" style="margin-top:10px" onclick="toast('${a.n} ready — pick an insight to run it on')">Run →</button></div>
+  </div>`).join('');
+
+/* ---------------- Search view ---------------- */
+const DOCS=[
+  {src:'jira',title:'ATLAS-also-1187 · Auth-service tests intermittently failing in CI',snip:'Pass rate dropped to 61%. Blocking 13 PRs across the Atlas board…',meta:'Jira · updated 2h ago · Atlas team'},
+  {src:'slack',title:'#atlas · "we\'re blocked on review again"',snip:'Thread with 9 messages about Platform reviewers being reassigned…',meta:'Slack · Jun 27 · 14 participants'},
+  {src:'gh',title:'PR #4821 · fix(auth): stabilize token refresh test',snip:'Open 5 days · awaiting review · CI red on flaky suite…',meta:'GitHub · Atlas · review latency 5.4d'},
+  {src:'conf',title:'Atlas Sprint 14 Retro',snip:'4 engineers raised the Platform dependency. No owner assigned for the reviewer swap…',meta:'Confluence · Jun 26'},
+  {src:'jira',title:'Q3 Launch Commitments — Atlas GA',snip:'Design partners: Northwind, Veridian, Cobalt. Target GA Sep 12…',meta:'Jira · Roadmap'}
+];
+function runSearch(){
+  const q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
+  const hits=DOCS.filter(d=>!q||((d.title+d.snip).toLowerCase().includes(q.split(' ')[0])||q.split(' ').some(w=>w.length>2&&(d.title+d.snip).toLowerCase().includes(w))));
+  const list=hits.length?hits:DOCS;
+  document.getElementById('searchRes').innerHTML=
+    `<div style="padding:11px 16px;font-size:11.5px;color:var(--ink3);border-bottom:1px solid var(--line2);font-weight:600">${list.length} results · ranked by relevance + your permissions</div>`+
+    list.map(d=>`<div class="res"><div class="rd ${SRC[d.src].c}">${SRC[d.src].l[0]}</div>
+      <div><div class="rt2">${d.title}</div><div class="rs">${d.snip}</div><div class="rm">${d.meta}</div></div></div>`).join('');
+}
+runSearch();
+
+/* ---------------- Assistant view ---------------- */
+const CHAT_REPLIES={
+  default:'Based on the Atlas signals, the highest-leverage move is to <b>borrow one Platform reviewer for a week and quarantine the flaky auth test</b> — that single change drops the slip probability from 0.78 to ~0.41. Want me to draft the ask to the Platform lead?',
+  reassign:'By code proximity, <b>A. Rivera</b> and <b>T. Okafor</b> are your best reviewer adds for Atlas — both have recent context in the auth and checkout modules and the lightest current review load.',
+  who:'<b>Jordan Park</b> is your key-person risk: sole CODEOWNER on billing-service and out Jul 6–17. <b>A. Rivera</b> is the strongest backup. Want a knowledge-transfer plan?'
+};
+function sendChat(){
+  const inp=document.getElementById('chatInput');const q=inp.value.trim();if(!q)return;
+  const chat=document.getElementById('chat');
+  chat.insertAdjacentHTML('beforeend',`<div class="msg u">${q}</div>`);
+  const lk=q.toLowerCase();
+  let r=CHAT_REPLIES.default;
+  if(lk.includes('reassign')||lk.includes('review'))r=CHAT_REPLIES.reassign;
+  else if(lk.includes('who')||lk.includes('person')||lk.includes('owner'))r=CHAT_REPLIES.who;
+  inp.value='';
+  setTimeout(()=>{chat.insertAdjacentHTML('beforeend',
+    `<div class="msg a">${r}<div class="cite"><span class="src"><span class="dot sg">G</span>GitHub</span><span class="src"><span class="dot sj">J</span>Jira</span></div></div>`);
+    chat.scrollIntoView({block:'end'});document.querySelector('.main').scrollTo({top:document.querySelector('.main').scrollHeight});},350);
+}
+
+/* ---------------- Settings ---------------- */
+function setVal(k,v){
+  if(k==='thr')document.getElementById('val-thr').textContent=(v/100).toFixed(2);
+  else if(k==='noise')document.getElementById('val-noise').textContent=v+' / 10';
+  else if(k==='lead')document.getElementById('val-lead').textContent=v<35?'Precision':v>65?'Early warning':'Balanced';
+}
+function tog(el,msg){el.classList.toggle('on');toast(msg);}
+document.getElementById('connSettings').innerHTML=CONNECTORS.map(c=>`
+  <div class="panel" style="padding:12px 13px;display:flex;align-items:center;gap:10px">
+    <div class="ci" style="width:30px;height:30px;font-size:12px;background:${c.col}">${c.i}</div>
+    <div style="flex:1"><b style="font-size:12.5px">${c.n}</b><div style="font-size:11px;color:var(--green);font-weight:600">connected</div></div>
+    <div class="tog on" onclick="tog(this,'${c.n} connector toggled')"></div></div>`).join('');
+
+/* ---------------- Drawer (insight detail) ---------------- */
+const drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');
+function openDrawer(id){
+  const i=INSIGHTS.find(x=>x.id===id);if(!i)return;
+  drawer.innerHTML=`
+    <div class="dhead"><div class="x" onclick="closeDrawer()">✕</div>
+      <div class="row"><span class="sev ${i.sev}">${i.sevtxt}</span>
+        <span style="font-size:11.5px;color:var(--ink3);font-weight:600">${i.sources.length} systems · confidence ${i.conf.toFixed(2)}</span></div>
+      <h3>${i.title}</h3><div class="sm">${i.meta}</div></div>
+    <div class="dbody">
+      <div class="block"><h4>✦ What Glean concluded</h4><div class="narr">${i.narr}</div></div>
+      <div class="block"><h4>⚖ Why — signal contribution</h4><div class="contrib">
+        ${i.contrib.map(c=>`<div class="citem"><div class="lbl"><span class="dot ${c.ic}" style="width:13px;height:13px;border-radius:4px;display:inline-grid;place-items:center;color:#fff;font-size:8px">●</span>${c.l}</div>
+          <div class="bar"><i style="width:${c.p}%"></i></div><div class="pct">${c.p}%</div></div>`).join('')}</div></div>
+      <div class="block"><h4>◷ Evidence timeline</h4><div class="tl">
+        ${i.timeline.map(e=>`<div class="ev ${e.warn?'warn':''}"><div class="when">${e.w}</div><div class="what">${e.t}</div></div>`).join('')}</div></div>
+      <div class="block"><h4>◎ Confidence & calibration</h4><div class="confbox">
+        <div class="top"><div class="num" style="color:${i.confcolor}">${i.conf.toFixed(2)}</div><div class="cap">composite score · higher = more reliable</div></div>
+        <div class="meter"><i style="width:${i.conf*100}%"></i></div><div class="note">${i.confnote}</div></div></div>
+      <div class="block"><h4>→ Recommended actions</h4><div class="acts">
+        ${i.actions.map((a,idx)=>`<div class="act ${a.agentic?'agentic':''}"><div class="ai">${a.ic}</div>
+          <div class="at"><b>${a.t}</b><span>${a.s}</span></div>
+          <button class="ab" onclick="${a.agentic?`runAgent('${i.id}',this)`:`doAct('${a.t}',this)`}">${a.ab}</button></div>`).join('')}
+        </div><div class="agentrun" id="agentrun"></div></div>
+      <div class="block" style="margin-bottom:6px"><div class="trust">
+        <div class="th">◈ Help calibrate this insight</div>
+        <div class="ts">Your feedback tunes confidence for your org — this is how proactive intelligence earns trust instead of becoming noise.</div>
+        <div class="fbrow">
+          <button class="fb" onclick="fb(this,'useful')">👍 Useful & acted</button>
+          <button class="fb" onclick="fb(this,'noise')">🔕 Not relevant</button>
+          <button class="fb" onclick="fb(this,'cal')">🎚 Confidence too high</button>
+          <button class="fb" onclick="fb(this,'late')">⏱ Surfaced too late</button></div>
+        <div class="fbmsg" id="fbmsg"></div></div></div>
+    </div>`;
+  scrim.classList.add('show');drawer.classList.add('show');
+}
+function closeDrawer(){scrim.classList.remove('show');drawer.classList.remove('show')}
+
+/* ---------------- Agent run (in drawer) ---------------- */
+const AGENT_STEPS={
+  atlas:['Reading Atlas board + 47 open Jira items','Diffing last 2 sprint velocities','Pulling 13 blocked PRs + CI logs','Reviewing 2 standup transcripts','Drafting 3 mitigation options'],
+  bus:['Scanning billing-service commit graph','Ranking engineers by code proximity','Checking calendars for transfer windows','Drafting a 3-day knowledge-transfer plan'],
+  win:['Reading Checkout runbook structure','Mapping Mobile & Data Platform gaps','Adapting template per team','Drafting 2 ready-to-edit runbooks']
+};
+const AGENT_OUT={
+  atlas:`<div class="ot">✓ Mitigation draft ready — posted to #atlas-leads as a draft for your approval</div>
+    <div class="draftbox">
+      <div class="opt"><b>Option A · Unblock (fastest):</b> Borrow 1 Platform reviewer for 1 week + quarantine the flaky auth test. Recovers ~70% of lost velocity. Slip risk 78%→39%.</div>
+      <div class="opt"><b>Option B · Rescope:</b> Cut 2 P2 features from GA, ship core to design partners on time. Protects the commit; defers ~3 wks of scope.</div>
+      <div class="opt"><b>Option C · Move the date:</b> Slip GA 12 days with proactive partner comms. Highest quality, hardest conversation.</div></div>`,
+  bus:`<div class="ot">✓ Knowledge-transfer plan drafted</div>
+    <div class="draftbox"><div class="opt"><b>Best backup:</b> A. Rivera — 19% of payments PRs, adjacent to billing module.</div>
+      <div class="opt"><b>Plan:</b> 3× 60-min pairing this week + Jordan records a refund-flow walkthrough + re-sequence BILL items out of PTO window.</div></div>`,
+  win:`<div class="ot">✓ 2 runbooks drafted from the Checkout template</div>
+    <div class="draftbox"><div class="opt"><b>Mobile:</b> adapted for React Native env setup + device lab access.</div>
+      <div class="opt"><b>Data Platform:</b> adapted for warehouse creds + dbt onboarding. Both ready to edit.</div></div>`
+};
+function runAgent(id,btn){
+  btn.textContent='Running…';btn.disabled=true;btn.style.opacity=.7;
+  const box=document.getElementById('agentrun');const steps=AGENT_STEPS[id]||AGENT_STEPS.atlas;
+  box.classList.add('show');
+  box.innerHTML=`<div class="ah"><span class="sp"></span> Glean agent is working — you stay in control</div>
+    <div id="asteps">${steps.map((s,n)=>`<div class="astep" data-n="${n}"><span class="mk"></span>${s}</div>`).join('')}</div>
+    <div class="agentout" id="agentout">${AGENT_OUT[id]||AGENT_OUT.atlas}
+      <div style="margin-top:11px;display:flex;gap:8px">
+        <button class="btn primary" onclick="doAct('Approved — agent will execute',this)">Approve & run</button>
+        <button class="btn" onclick="doAct('Saved to review later',this)">Save draft</button></div></div>`;
+  box.scrollIntoView({behavior:'smooth',block:'center'});
+  let n=0;
+  const tick=()=>{
+    const els=box.querySelectorAll('.astep');
+    if(n>0){els[n-1].classList.remove('on');els[n-1].classList.add('ok');els[n-1].querySelector('.mk').textContent='✓';}
+    if(n<els.length){els[n].classList.add('on');n++;setTimeout(tick,720);}
+    else{box.querySelector('.ah').innerHTML='<span style="width:16px;height:16px;border-radius:50%;background:#1A9A6C;display:grid;place-items:center;color:#fff;font-size:11px">✓</span> Agent finished — review before anything ships';
+      document.getElementById('agentout').classList.add('show');btn.textContent='Done';btn.classList.add('done');}
+  };
+  tick();
+}
+
+/* ---------------- Shared interactions ---------------- */
+function fb(btn,kind){
+  btn.parentElement.querySelectorAll('.fb').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');
+  const msg=document.getElementById('fbmsg');msg.classList.add('show');
+  msg.textContent=kind==='useful'?'✓ Logged. Glean reinforces this signal pattern and will keep surfacing similar risks early.'
+    :'✓ Logged. Glean will down-weight this pattern for your team and re-score similar insights.';
+}
+function doAct(label,btn){if(btn){btn.textContent='✓ Done';btn.disabled=true;btn.style.opacity=.8;}toast(label);}
+function quickAct(id){const i=INSIGHTS.find(x=>x.id===id);
+  if(i.actions[0].agentic){openDrawer(id);setTimeout(()=>{const b=document.querySelector('.act.agentic .ab');if(b)runAgent(id,b)},340);}
+  else doAct(i.actions[0].t);}
+function toast(text){const t=document.createElement('div');t.className='toast';
+  t.innerHTML=`<span class="tk">✓</span><span>${text}</span>`;document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>{t.style.transition='.3s';t.style.opacity=0;t.style.transform='translateY(8px)';setTimeout(()=>t.remove(),300)},2600);}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+</script>
+</body>
+</html>
